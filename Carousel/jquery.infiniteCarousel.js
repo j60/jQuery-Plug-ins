@@ -57,7 +57,7 @@
 			/**
 			 * @globals
 			 */
-			var oContainer		= $(this),
+			var oContainer			= $(this),
 				oItems			= oContainer.children(),
 				iItemWidth		= oContainer.children(':first').outerWidth(),
 				bAnimating		= false,
@@ -474,8 +474,3 @@
 	};
 
 })(jQuery);
-
-
-
-
-
