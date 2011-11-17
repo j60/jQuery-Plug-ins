@@ -1,7 +1,6 @@
 /**
  * Infinite Carousel
  *
- * @copyright	Fantasy Interactive
  * @author		Karl Stanton
  * @version		0.1 - Original prototype
  * @version		0.2 - Added class documentation
@@ -11,67 +10,23 @@
  * @version		0.6 - Added direction change for auto rotate after clicking next / back
  * @version		0.7 - Added rotation time
  *
- * The infinite carousels purpose is to allow the user to scroll through the
+ * The carousels purpose is to allow the user to scroll through the
  * carousel items infinitely, no matter how many items exist in the item list.
  *
- * The carousel will not scroll if there are less items than
- *
- * oOptions.iPerPage + 1
- *
- * For example:
- *
- * If we are showing 5 items per 'page', there must be a minimum of 6 items for
- * the carousel to activate.
- *
- * Setup HTML:
- *
- * 	<div id="fullEpisodesSlider">
- * 		<ul>
- * 			<li> Item </li>
- * 			<li> Item </li>
- * 			<li> Item </li>
- *		</ul>
- * 	</div>
- *
- * Setup CSS:
- *
- * #fullEpisodesSlider {
- * 		overflow: hidden;
- * 		height: 360px;
- * 		width: 940px;
- * }
- *
- * #fullEpisodesSlider ul {
- * 		clear: both;
- * 		width: 10000px;
- * 		position: relative;
- * }
- *
- * #fullEpisodesSlider li {
- * 		width: 188px;
- * 		float: left;
- * 		position: relative;
- * }
- *
- *
- * Invoke by:
- *
- * var oClipsList = $('ul', '#fullEpisodesSlider').infiniteCarousel({
- * 		iPerPage: 5,
- * 		oNavigationNext: $('a.btnFullEpisodesNext', '#fullEpisodes'),
- * 		oNavigationPrevious: $('a.btnFullEpisodesPrevious', '#fullEpisodes'),
- *      iRotationTime: 1000
- * });
+ * The carousel will not scroll if there are less items than oOptions.iPerPage + 1
  *
  */
+
+;
+
 (function ($) {
 
 	/**
-	 * Infinite Carousel
+	 * Carousel
 	 * @constructor
 	 * @param {Object} oCustomOptions
 	 */
-	$.fn.infiniteCarousel = function (oCustomOptions) {
+	$.fn.carousel = function (oCustomOptions) {
 
 		// Return if this element is not found
 		if (!this[0]) {
@@ -79,13 +34,16 @@
 		};
 
 		var oDefaults = {
+			iStartID: 0,
 			iPerPage: 5,
 			oNavigationNext: '',
 			oNavigationPrevious: '',
 			iAutoRotate: 0,
 			iRotateDir: 1,
 			bShowPageNumbers: false,
-			iRotationTime: 500
+			iRotationTime: 500,
+			oClickCallback: function () {},
+			oPaginateCallback: function () {}
 		};
 
 		var oOptions	= $.extend(oDefaults, oCustomOptions || {});
@@ -111,10 +69,11 @@
 				btnPrevious		= oOptions.oNavigationPrevious,
 				btnNext			= oOptions.oNavigationNext,
 
+				// The total number of items in the carousel
+				iNumItems		= oItems.length,
+				
+				iPageIndex		= oOptions.iStartID;
 
-			// The total number of items in the carousel
-			iNumItems			= oItems.length;
-			
 			// Prepare the container
 			oContainer.css({
 				'position': 'relative',
@@ -154,7 +113,12 @@
 				btnPrevious.show().click(function (oEvent) {
 
 					if (!bAnimating) {
+					
 						onPreviousNextClick(-1);
+						
+						// Callback
+						oOptions.oClickCallback(-1);
+						
 					}
 					return false;
 
@@ -168,7 +132,12 @@
 				btnNext.show().click(function (oEvent) {
 
 					if (!bAnimating) {
+					
 						onPreviousNextClick(1);
+						
+						// Callback
+						oOptions.oClickCallback(1);
+						
 					}
 					return false;
 
@@ -267,6 +236,8 @@
 				
 				$('a:eq(' + (iCurrentIndex) + ')', oPageNumbers).addClass('current');
 				
+				return iCurrentIndex;
+				
 			}
 
 			/**
@@ -285,6 +256,15 @@
 
 				// Get the width and height set
 				resetItemsAndWidth();
+				
+				iPageIndex = iPageIndex + iDirection;
+				
+				if (iPageIndex >= iNumItems) {
+					iPageIndex = 0;
+				}
+				else if (iPageIndex < 0) {
+					iPageIndex = iNumItems - 1;
+				}
 
 				// Update the Auto Rotate Direction
 				oOptions.iRotateDir = iDirection;
@@ -318,9 +298,9 @@
 				}
 				
 				// Set the page number
-				if (oOptions.bShowPageNumbers) {
-					moveSelectedPageNumber(iDirection);
-				}
+				//if (oOptions.bShowPageNumbers) {
+				iCurrentIndex = moveSelectedPageNumber(iDirection);
+				//}
 				
 				// Animate the carousel
 				oContainer.animate({
@@ -346,6 +326,9 @@
 						oContainer.css('left', 0);
 
 					}
+					
+					// Callback
+					oOptions.oPaginateCallback(iDirection, iPageIndex);
 
 					// Reset
 					resetItemsAndWidth();
@@ -467,6 +450,8 @@
 			 */
 			function setupAutoRotate () {
 
+				clearInterval(oRotateInterval);
+	
 				// Auto Rotate?
 				if (oOptions.iAutoRotate > 0) {
 
