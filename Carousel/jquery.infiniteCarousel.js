@@ -1,7 +1,6 @@
 /**
  * Infinite Carousel
  *
- * @copyright	Fantasy Interactive
  * @author		Karl Stanton
  * @version		0.1 - Original prototype
  * @version		0.2 - Added class documentation
@@ -99,7 +98,7 @@
 			/**
 			 * @globals
 			 */
-			var oContainer		= $(this),
+			var oContainer			= $(this),
 				oItems			= oContainer.children(),
 				iItemWidth		= oContainer.children(':first').outerWidth(),
 				bAnimating		= false,
@@ -489,8 +488,3 @@
 	};
 
 })(jQuery);
-
-
-
-
-
