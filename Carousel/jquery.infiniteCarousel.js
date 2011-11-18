@@ -100,6 +100,14 @@
 
 			setupAutoRotate();
 
+			// Prevent Chrome from stacking animations on inactive tabs
+			$(window).focus(function() {
+				oRotateInterval = setupAutoRotate();
+			});
+			
+			$(window).blur(function() {
+				window.clearInterval(oRotateInterval);
+			});
 
 			/**
 			 * Binds events to the previous and next buttons, as well as
@@ -451,7 +459,7 @@
 			function setupAutoRotate () {
 
 				clearInterval(oRotateInterval);
-	
+
 				// Auto Rotate?
 				if (oOptions.iAutoRotate > 0) {
 
@@ -464,6 +472,8 @@
 					oRotateInterval = setInterval(function () {}, oOptions.iAutoRotate);
 
 				}
+				
+				return oRotateInterval;
 
 			}
 
