@@ -1,0 +1,50 @@
+/* xl theme */
+
+.xlselect.xl { font: normal 13px/1 Arial; }
+.xlselect.xl ul li { background: #fff; }
+.ipad .xlselect.xl ul{
+  height: 193px;
+  overflow: auto;
+}
+.xlselect.xl {
+  width: 250px;
+  background-color: white;
+  border: 1px solid #CCC;
+  height: 35px;
+  line-height: 35px;
+  padding: 0 0 0 8px;
+  color: #444;
+  font-size: 13px;
+}
+.xlselect.xl .title {
+  font-weight: bold;
+  margin-top: 8px;
+}
+.xlselect.xl >span {
+  float: right;
+   margin: 13px 8px 0 0;
+  display: block;
+}
+.xlselect.xl ul {
+  top: 35px;
+  width: 100%;
+  left: -1px;
+  border: 1px solid #ccc;
+}
+.xlselect.xl ul li {
+  background: #fff;
+  color: #000;
+  padding: 8px 10px 9px 8px;
+  border-top: 1px solid #ccc;
+}
+.xlselect.xl ul li:first-child { border: 0; }
+.xlselect.xl ul li:hover, .xlselect.xl ul li.selected { background: #eee; }
+.xlselect.xl .expanded.xlselect.xl {
+  background-color: #00ADEB;
+  color: #fff;
+}
+.selected.xlselect.xl { background-color: #eee; }
+.xlselect.xl[disabled='disabled'] { 
+  opacity: 0.5;
+  filter: alpha(opacity = 50);
+}

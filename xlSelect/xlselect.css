@@ -1,0 +1,14 @@
+/* Basic styling */
+
+.xlselect {
+  position: relative;
+  cursor: pointer;
+}
+.xlselect .title { margin: 0; }
+.xlselect ul {
+  position: absolute;
+  display: none;
+  left: 0;
+  top: 20px;
+}
+
