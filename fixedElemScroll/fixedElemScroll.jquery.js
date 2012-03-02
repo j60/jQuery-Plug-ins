@@ -24,7 +24,6 @@
         function stickIt() {
           // check if the bottom of the parent element is inside the view port
           if (settings.$parent.offset().top + settings.$parent.height() - settings.bottom < $window.scrollTop() + $window.height()) {
-            //console.log(settings.$parent.offset().top, $this.offset().top)
             $this.css({
               position: "absolute",
               bottom: settings.bottom
