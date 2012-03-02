@@ -19,8 +19,9 @@
       }, options);
       
       process = function() {
+        // fix for IE7 layout bug
+        settings.$parent.css({'zoom':1});
         function stickIt() {
-          console.log($this.offset().top + $this.height(), $window.scrollTop() + $window.height(), settings.$parent.offset().top, $this.offset().top)
           // check if the bottom of the parent element is inside the view port
           if (settings.$parent.offset().top + settings.$parent.height() - settings.bottom < $window.scrollTop() + $window.height()) {
             //console.log(settings.$parent.offset().top, $this.offset().top)
