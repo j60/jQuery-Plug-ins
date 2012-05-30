@@ -1,6 +1,7 @@
 // jQuery xlSelect Plugin
-// version 0.1, Jan. 26th, 2012
+// version 0.2, May 30th, 2012
 // by Stanislas Duprey
+
 
 (function($) {
 
@@ -8,29 +9,29 @@
       // public methods to be called from outside the pulgin
       var methods = {
         reset: function(){
-          var title = this.attr("placeholder");
-          this
-            .next()
-            .removeClass("selected")
-            .find(".title")
-            .html(title);
+          if (isCustom) {
+            var title = this.attr("placeholder");
+            this.next().removeClass("selected").find(".title").html(title);
+          } else {
+            this.find("option").removeAttr("selected").first().attr("selected", "selected")
+          }
           return this;
         },
         disable: function(){
-          this
-            .attr("disabled", "disabled")
-            .next()
-            .attr("disabled", "disabled");
+          this.attr("disabled", "disabled")
+          if (isCustom) this.next().attr("disabled", "disabled");
           return this;
         },
         enable: function(){
-          this
-            .removeAttr("disabled")
-            .next()
-            .removeAttr("disabled");
+          this.removeAttr("disabled")
+          if (isCustom) this.next().removeAttr("disabled");
           return this;
         }
       }
+      var $window = $(window);
+
+      var isCustom = typeof navigator == "undefined" || (!/iphone|ipad|ipod|android|blackberry|mini|windows\sce|palm/i.test(navigator.userAgent.toLowerCase()));
+
       // if options is a tsring then its trying to call a public method
       if (typeof options === "string") return methods[options].apply(this, Array.prototype.slice.call(arguments, 1));
       var settings = $.extend({
@@ -45,7 +46,11 @@
         // function called when you close the dropdown
         collapseCallback: null,
         // function called when you select an item in the dropdown
-        selectCallback: null
+        selectCallback: null,
+        // function called when init is done
+        init: null,
+        // set the max height of the select dropdown so that it never goes passed the window
+        overflowScroll: true
       }, options);
 
       function getReplacementHTML($select) {
@@ -54,10 +59,8 @@
         var $optionEls = $select.children();
         // title is either a default value, the value of the placeholder attribute in the select, or the selected item if any
         var title = $select.attr("placeholder") || "Select an option";
-        // ie7 issue: even if no items have the attribute "selected", ie7 would set it to the first item
-        var ie7 = $(".ie7").length > 0 && $select.attr("placeholder") != undefined;
         var $selectedOption = $select.find("[selected='selected']");
-        if ($selectedOption.length>0 && !ie7) {
+        if ($selectedOption.length>0) {
           title = $selectedOption.html();
           classes += " selected";
         }
@@ -68,21 +71,33 @@
         var lis = "";
         for (var i=0, len=$optionEls.length; i<len; i++) {
           var $option = $($optionEls[i]);
-          var attrs = "";
-          for (var attr, j=0, attrNodes=$optionEls[i].attributes, l=attrNodes.length; j<l; j++){
-            attr = attrNodes.item(j)
-            if (attr.nodeName != "value" && attr.nodeName != "id" && attr.nodeName != "selected" && attr.nodeValue) attrs += " "+attr.nodeName+"='"+attr.nodeValue+"'";
+          // the default option (usually "all") must have value === "placeholder"
+          // and if you want this option to be available in the custom drop down, add the attribute displayOnly
+          if (true || $option.val() != "placeholder" || typeof $option.attr("displayAlways") != "undefined") {
+            var attrs = "";
+            for (var attr, j=0, attrNodes=$optionEls[i].attributes, l=attrNodes.length; j<l; j++){
+              attr = attrNodes.item(j)
+              if (attr.nodeName != "value" && attr.nodeName != "id" && attr.nodeName != "selected" && attr.nodeValue) attrs += " "+attr.nodeName+"='"+attr.nodeValue+"'";
+            }
+            lis += "<li data-value='"+$option.val()+"'"+attrs+">"+$option.html()+"</li>";
           }
-          lis += "<li data-value='"+$option.val()+"'"+attrs+">"+$option.html()+"</li>";
         }
         $container.find("ul").append(lis);
         // if there is a selected value, highlight it in the dropdown
-        var selectedValue = $select.find("[selected]").val();
-        if (selectedValue != undefined && !ie7) $container.find("[data-value='"+selectedValue+"']").addClass("selected");
+        var selectedValue = $selectedOption.val();
+        if (typeof selectedValue != "undefined") $container.find("[data-value='"+selectedValue+"']").addClass("selected");
         return $container;
       }
       
-      function activate($newSelect) {
+      function setMaxHeight($el){
+        var $ul = $el.find("ul");
+        $ul.css("max-height", "none");
+        if ($ul.offset().top + $ul.height() > $window.scrollTop() + $window.height()) {
+          $ul.css("max-height", $window.scrollTop() + $window.height() - $ul.offset().top - 10);
+        }
+      }
+      
+      function activate($newSelect, $select) {
         $newSelect.find("li").click(function(e){
           var $li = $(this);
           var $container = $li.closest(".xlselect");
@@ -99,15 +114,20 @@
             $container.find("p.title").text($li.text());
             $newSelect.addClass("selected");
           }
-          // callback action if any
-          if (typeof settings.selectCallback === "function") settings.selectCallback.call($newSelect, $li);
+          $select.trigger("change")
           e.stopPropagation();
+        })
+        $newSelect.find("ul").bind('mousewheel', function(e, d) {
+          var $this = $(this),
+              height = $this.height(),
+              scrollHeight = $this.get(0).scrollHeight;
+          if((this.scrollTop === (scrollHeight - height) && d < 0) || (this.scrollTop === 0 && d > 0)) { e.preventDefault(); }
         });
         $newSelect.click(function(e){
           if ($newSelect.attr("disabled")!="disabled") toggleSelect($newSelect);
           e.stopPropagation();
         });
-        $(document).click(function(){ if ($newSelect.hasClass("expanded")) toggleSelect($newSelect); });
+        $(document).click(function(e){ if ($newSelect.hasClass("expanded")) toggleSelect($newSelect); });
       }
       
       function toggleSelect($el) {
@@ -119,6 +139,8 @@
           // z-index fix
           $el.css("z-index", $el.attr("data-zIndex"));
         } else {
+          // set max height depending on the size of the window
+          if (settings.overflowScroll) { setMaxHeight($el); }
           // expand callback
           if (typeof settings.collapseCallback === "function") settings.expandCallback.call($el);
           // z-index fix
@@ -133,9 +155,24 @@
       }
       return this.each(function() {
         var $select = $(this);
-        var $newSelect = getReplacementHTML($select);
-        $select.hide().after($newSelect);
-        activate($newSelect);
+        $select.change(function(){
+          // callback action if any
+          if (typeof settings.selectCallback === "function") settings.selectCallback.call($(this));
+        });
+        if (isCustom) {
+          var $newSelect = getReplacementHTML($select);
+          $select.hide().after($newSelect);
+          activate($newSelect,$select);
+        }
+        var placeholder = $select.attr("placeholder");
+        if (typeof placeholder != "undefined" && $select.find("[value=placeholder]").length === 0) {
+          selected = (typeof $newSelect == "undefined" || $newSelect.find(".selected").length>0) ? "" : " selected='selected'";
+          $select.prepend("<option"+selected+" value='placeholder'>"+placeholder+"</option>");
+        }
+        // init callback
+        if (typeof settings.init === "function") {
+          settings.init.call($select);
+        }
       });
     }
 
