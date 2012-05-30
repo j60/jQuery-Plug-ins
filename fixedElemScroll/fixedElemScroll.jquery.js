@@ -6,8 +6,7 @@
 
     $.fn.fixedElemScroll = function(options) {
       // public methods to be called from outside the pulgin
-      var methods = {
-      }
+      var methods = {}
       // if options is a tsring then its trying to call a public method
       if (typeof options === "string") return methods[options].apply(this, Array.prototype.slice.call(arguments, 1));
       var $this = $(this);
@@ -18,34 +17,40 @@
         // and the bottom of the closest parent element with a position not equal "static"
         bottom: 0
       }, options);
+      
+      process = function() {
+        // fix for IE7 layout bug
+        settings.$parent.css({'zoom':1});
+        function stickIt() {
+          // check if the bottom of the parent element is inside the view port
+          if (settings.$parent.offset().top + settings.$parent.height() - settings.bottom < $window.scrollTop() + $window.height()) {
+            $this.css({
+              position: "absolute",
+              bottom: settings.bottom
+            });
+          } else {
+            // check if the top of the parent element is outside the view port
+            if (($this.offset().top + $this.height()) < $window.scrollTop() + $window.height() || $this.css("position") === "absolute") {
+              $this.css({
+                position: "fixed",
+                bottom: 0
+              });
+            }
+            // check if the image is higher then the parent element
+            if (settings.$parent.offset().top >= $this.offset().top) {
+              $this.css({ position: "relative" });
+            }
+          }
+        };
+        stickIt();
+        $window.scroll(function() { stickIt(); });
+        $window.resize(function() { stickIt(); });
+      };
 
       return this.each(function() {
         if (settings.$parent.css("position") === "static") { settings.$parent.css("position", "relative"); }
-        $this.load(function() {
-          function stickIt() {
-            // check if the bottom of the parent element is inside the view port
-            if (settings.$parent.offset().top + settings.$parent.height() - settings.bottom < $window.scrollTop() + $window.height()) {
-              $this.css({
-                position: "absolute",
-                bottom: settings.bottom
-              });
-            } else {
-              // check if the top of the parent element is outside the view port
-              if (($this.offset().top + $this.height()) < $window.scrollTop() + $window.height() || $this.css("position") === "absolute") {
-                $this.css({
-                  position: "fixed",
-                  bottom: 0
-                });
-              // check if the image is higher then the parent element
-              } else if (settings.$parent.offset().top >= $this.offset().top) {
-                $this.css({ position: "relative" });
-              }
-            }
-          };
-          stickIt();
-          $window.scroll(function() { stickIt(); });
-          $window.resize(function() { stickIt(); });
-        });
+        if ($this.height()>0) process();
+        else $this.load(process);
       });
     }
 
